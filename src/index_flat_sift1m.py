@@ -18,35 +18,48 @@ nq, d = xq.shape
 
 ncent = 256
 
-variants = [(name, getattr(faiss.ScalarQuantizer, name))
-            for name in dir(faiss.ScalarQuantizer)
-            if name.startswith('QT_')]
+# variants = [(name, getattr(faiss.ScalarQuantizer, name))
+#             for name in dir(faiss.ScalarQuantizer)
+#             if name.startswith('QT_')]
 
+testname = ["flat","ivfflat"]
 quantizer = faiss.IndexFlatL2(d)
 # quantizer.add(np.zeros((1, d), dtype='float32'))
 
 if True:
-    for i in 1, 1000:
-        for name, qtype in [('flat', 0)] + variants:
+    for name in testname:
+        print("============== test", name)
 
-            print("============== test", name)
+        if name == 'flat':
+            index = faiss.index_factory(d, "Flat")
+        else:
+            index = faiss.IndexIVFFlat(quantizer, d, ncent,
+                                    faiss.METRIC_L2)
+        for probe in 16,32,48,64,80:            
+            index.nprobe = probe         
             t0 = time.time()
-
-            if name == 'flat':
-                index = faiss.IndexIVFFlat(quantizer, d, ncent,
-                                        faiss.METRIC_L2)
-            else:
-                index = faiss.IndexIVFScalarQuantizer(quantizer, d, ncent,
-                                                    qtype, faiss.METRIC_L2)
-
-            index.nprobe = 16
-            print("[%.3f s] train" % (time.time() - t0))
             index.train(xt)
-            print("[%.3f s] add" % (time.time() - t0))
+            train_time = time.time() - t0
+            # print("[%.3f s] train" % (time.time() - t0))
+            
+            t0 = time.time()
             index.add(xb)
-            print("[%.3f s] search" % (time.time() - t0))
-            D, I = index.search(xq, 100)
-            print("[%.3f s] eval" % (time.time() - t0))
+            add_time = time.time() - t0
+            # print("[%.3f s] add" % (time.time() - t0))            
+            
+            t0 = time.time()
+            for i in range(1, 5):
+                D, I = index.search(xq, 100)
+            search_time = time.time() - t0
+            print("probe[%.0f] train [%.3f s] add [%.3f s] search [%.3f s] " % (
+                probe, 
+                train_time, 
+                add_time,
+                search_time
+            ))
+            # print("[%.3f s] search" % (time.time() - t0))
+
+            # print("[%.3f s] eval" % (time.time() - t0))
 
             for rank in 1, 10, 100:
                 n_ok = (I[:, :rank] == gt[:, :1]).sum()
