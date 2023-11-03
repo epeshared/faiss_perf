@@ -26,31 +26,32 @@ quantizer = faiss.IndexFlatL2(d)
 # quantizer.add(np.zeros((1, d), dtype='float32'))
 
 if True:
-    for name, qtype in [('flat', 0)] + variants:
+    for i in 1, 1000:
+        for name, qtype in [('flat', 0)] + variants:
 
-        print("============== test", name)
-        t0 = time.time()
+            print("============== test", name)
+            t0 = time.time()
 
-        if name == 'flat':
-            index = faiss.IndexIVFFlat(quantizer, d, ncent,
-                                       faiss.METRIC_L2)
-        else:
-            index = faiss.IndexIVFScalarQuantizer(quantizer, d, ncent,
-                                                  qtype, faiss.METRIC_L2)
+            if name == 'flat':
+                index = faiss.IndexIVFFlat(quantizer, d, ncent,
+                                        faiss.METRIC_L2)
+            else:
+                index = faiss.IndexIVFScalarQuantizer(quantizer, d, ncent,
+                                                    qtype, faiss.METRIC_L2)
 
-        index.nprobe = 16
-        print("[%.3f s] train" % (time.time() - t0))
-        index.train(xt)
-        print("[%.3f s] add" % (time.time() - t0))
-        index.add(xb)
-        print("[%.3f s] search" % (time.time() - t0))
-        D, I = index.search(xq, 100)
-        print("[%.3f s] eval" % (time.time() - t0))
+            index.nprobe = 16
+            print("[%.3f s] train" % (time.time() - t0))
+            index.train(xt)
+            print("[%.3f s] add" % (time.time() - t0))
+            index.add(xb)
+            print("[%.3f s] search" % (time.time() - t0))
+            D, I = index.search(xq, 100)
+            print("[%.3f s] eval" % (time.time() - t0))
 
-        for rank in 1, 10, 100:
-            n_ok = (I[:, :rank] == gt[:, :1]).sum()
-            print("%.4f" % (n_ok / float(nq)), end=' ')
-        print()
+            for rank in 1, 10, 100:
+                n_ok = (I[:, :rank] == gt[:, :1]).sum()
+                print("%.4f" % (n_ok / float(nq)), end=' ')
+            print()
 
 if False:
     for name, qtype in variants:
