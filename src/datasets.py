@@ -7,6 +7,8 @@ from __future__ import print_function
 import sys
 import time
 import numpy as np
+import os
+import faiss
 
 
 def ivecs_read(fname):
@@ -53,3 +55,9 @@ def evaluate(index, xq, gt, k):
         i *= 10
 
     return (t1 - t0) * 1000.0 / nq, recalls
+
+def get_memory(index):
+    faiss.write_index(index, './tmp.index')
+    file_size = os.path.getsize('./tmp.index')
+    os.remove('./tmp.index')
+    return file_size
