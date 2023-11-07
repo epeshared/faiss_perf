@@ -4,73 +4,196 @@
 # LICENSE file in the root directory of this source tree.
 
 import time
+import sys
 import numpy as np
 import faiss
-from datasets import load_sift1M
-from datasets import load_deep1B
 from datasets import get_memory
-from datasets import evaluate
-import multiprocessing as mp
+from datasets import load_sift1M
+
+# from datasets import load_sift1M
+
+
+k = int(sys.argv[1])
+todo = sys.argv[2:]
 
 print("load data")
+
+# xb, xq, xt, gt = load_sift1M()
+
+# ds = DatasetSIFT1M()
 
 xb, xq, xt, gt = load_sift1M()
 nq, d = xq.shape
 
-k = 1
-m = 32
+nq, d = xq.shape
+
+if todo == []:
+    todo = 'hnsw hnsw_sq ivf_hnsw_quantizer kmeans_hnsw'.split()
 
 
-nlist = 1024
-coarse_quantizer = faiss.IndexFlatL2(d)
-# index = faiss.IndexIVFPQ(coarse_quantizer, d, nlist, m, nbits)
-index = faiss.index_factory(d, "IVF1024,PQ32x4fs")
+def evaluate(index, m):
+    # for timing with a single core
+    # faiss.omp_set_num_threads(1)
 
-faiss.omp_set_num_threads(mp.cpu_count())
-
-t0 = time.time()
-index.train(xt)
-train_time = time.time() - t0
-# print("[%.3f s] train" % (time.time() - t0))
-
-print("----> add")
-t0 = time.time()
-index.add(xb)
-add_time = time.time() - t0
-# print("[%.3f s] add" % (time.time() - t0))            
-
-print(f"----> search nq: {nq}")
-print(
-    f'nprobe, Recall@{k}, '
-    f'speed(ms/query), search_time, qps, memory_size'
-)
-
-for nprobe in 1, 2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 128:
-    index.nprobe = nprobe
     t0 = time.time()
     for i in range(1, 5):
         D, I = index.search(xq, k)
-    search_time = time.time() - t0
+    t1 = time.time()
+    search_time = t1 - t0
 
     ms = get_memory(index) / (1024 * 1024)
 
     speed = search_time * 1000 / nq
-    qps = 1000 / speed
+    qps = 1000 / speed    
 
-    corrects = (gt == I).sum()
-    recall = corrects / nq
-    # rank = k               
-    # corrects = (gt[:, :rank] == I[:, :rank]).sum()
-    # recall = corrects / nq    
-    print(
-        f'{index.nprobe:3d},'
-        f'{recall:.6f}, {speed:.6f}, {search_time:.2f}, {qps:.2f}, {ms:.0f}'
-    )    
-    # print("[%.3f s] search" % (time.time() - t0))
+    missing_rate = (I == -1).sum() / float(k * nq)
+    recall_at_1 = (I == gt[:, :1]).sum() / float(nq)
+    print(f'{index.hnsw.efConstruction}, {index.hnsw.efSearch}, {m}, ' 
+          f'{search_time:.4f} , {qps:.0f} , {recall_at_1}, {missing_rate:.4f}, {ms:.0f}')
 
-    # print("[%.3f s] eval" % (time.time() - t0))
-    # for rank in 1, 10, 100:
-    #     n_ok = (I[:, :rank] == gt[:, :1]).sum()
-    #     cb = (n_ok / float(nq))
-    #     print(("%.4f" % cb), end=' ')
-    # print()
+
+if 'hnsw' in todo:
+
+    print("Testing HNSW Flat")
+    print("efConstruction, efSearch, m, speed(ms/query),qps, R@1, missing rate, memory_size")    
+    for m in 4,16,32,64:
+        #m: Number of connections that would be made for each new vertex during HNSW construction.
+        for efConstruction in 4,16,40,76:
+            index = faiss.IndexHNSWFlat(d, m)
+
+            # training is not needed
+
+            # this is the default, higher is more accurate and slower to
+            # construct. it is s the depth of exploration at add time
+            index.hnsw.efConstruction = efConstruction
+
+            # print("add")
+            # to see progress
+            index.verbose = True
+            index.add(xb)
+
+            # print("search")
+            # efSearch is the depth of exploration of the search            
+            for efSearch in 16, 32, 64, 128, 256:
+                # for bounded_queue in [True, False]:
+                    # print("efSearch", efSearch, "bounded queue", bounded_queue, end=' ')
+                    # index.hnsw.search_bounded_queue = bounded_queue
+                index.hnsw.efSearch = efSearch
+                evaluate(index, m)
+            del index
+
+# if 'hnsw_sq' in todo:
+
+#     print("Testing HNSW with a scalar quantizer")
+#     # also set M so that the vectors and links both use 128 bytes per
+#     # entry (total 256 bytes)
+#     index = faiss.IndexHNSWSQ(d, faiss.ScalarQuantizer.QT_8bit, 16)
+
+#     print("training")
+#     # training for the scalar quantizer
+#     index.train(xt)
+
+#     # this is the default, higher is more accurate and slower to
+#     # construct
+#     index.hnsw.efConstruction = 40
+
+#     print("add")
+#     # to see progress
+#     index.verbose = True
+#     index.add(xb)
+
+#     print("search")
+#     for efSearch in 16, 32, 64, 128, 256:
+#         print("efSearch", efSearch, end=' ')
+#         index.hnsw.efSearch = efSearch
+#         evaluate(index)
+
+# if 'ivf' in todo:
+
+#     print("Testing IVF Flat (baseline)")
+#     quantizer = faiss.IndexFlatL2(d)
+#     index = faiss.IndexIVFFlat(quantizer, d, 16384)
+#     index.cp.min_points_per_centroid = 5   # quiet warning
+
+#     # to see progress
+#     index.verbose = True
+
+#     print("training")
+#     index.train(xt)
+
+#     print("add")
+#     index.add(xb)
+
+#     print("search")
+#     for nprobe in 1, 4, 16, 64, 256:
+#         print("nprobe", nprobe, end=' ')
+#         index.nprobe = nprobe
+#         evaluate(index)
+
+# if 'ivf_hnsw_quantizer' in todo:
+
+#     print("Testing IVF Flat with HNSW quantizer")
+#     quantizer = faiss.IndexHNSWFlat(d, 32)
+#     index = faiss.IndexIVFFlat(quantizer, d, 16384)
+#     index.cp.min_points_per_centroid = 5   # quiet warning
+#     index.quantizer_trains_alone = 2
+
+#     # to see progress
+#     index.verbose = True
+
+#     print("training")
+#     index.train(xt)
+
+#     print("add")
+#     index.add(xb)
+
+#     print("search")
+#     quantizer.hnsw.efSearch = 64
+#     for nprobe in 1, 4, 16, 64, 256:
+#         print("nprobe", nprobe, end=' ')
+#         index.nprobe = nprobe
+#         evaluate(index)
+
+# # Bonus: 2 kmeans tests
+
+# if 'kmeans' in todo:
+#     print("Performing kmeans on sift1M database vectors (baseline)")
+#     clus = faiss.Clustering(d, 16384)
+#     clus.verbose = True
+#     clus.niter = 10
+#     index = faiss.IndexFlatL2(d)
+#     clus.train(xb, index)
+
+
+# if 'kmeans_hnsw' in todo:
+#     print("Performing kmeans on sift1M using HNSW assignment")
+#     clus = faiss.Clustering(d, 16384)
+#     clus.verbose = True
+#     clus.niter = 10
+#     index = faiss.IndexHNSWFlat(d, 32)
+#     # increase the default efSearch, otherwise the number of empty
+#     # clusters is too high.
+#     index.hnsw.efSearch = 128
+#     clus.train(xb, index)
+
+# if 'nsg' in todo:
+
+#     print("Testing NSG Flat")
+
+#     index = faiss.IndexNSGFlat(d, 32)
+#     index.build_type = 1
+#     # training is not needed
+
+#     # this is the default, higher is more accurate and slower to
+#     # construct
+
+#     print("add")
+#     # to see progress
+#     index.verbose = True
+#     index.add(xb)
+
+#     print("search")
+#     for search_L in -1, 16, 32, 64, 128, 256:
+#         print("search_L", search_L, end=' ')
+#         index.nsg.search_L = search_L
+#         evaluate(index)
