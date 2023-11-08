@@ -30,7 +30,8 @@ RUN pip3 install numpy
 # RUN cmake -B build . -DFAISS_ENABLE_GPU=OFF -DBUILD_TESTING=OFF -DFAISS_ENABLE_PYTHON=ON -DPython_EXECUTABLE=/usr/bin/python3 -DPython_LIBRARIES=/usr/lib/python3.10 -DCMAKE_BUILD_TYPE=Release \
 #     -DFAISS_OPT_LEVEL=avx512 -DFAISS_ENABLE_C_API=ON -DPython_INCLUDE_DIRS=/usr/include/python3.10 -DFAISS_ENABLE_MKL=ON -DBLA_VENDOR=Intel10_64lp_seq -DMKL_LIBRARIES=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_rt.so
 
-# RUN cmake -B build . -DFAISS_ENABLE_GPU=OFF -DBUILD_TESTING=ON -DFAISS_ENABLE_PYTHON=ON -DPython_EXECUTABLE=/usr/bin/python3 -DPython_LIBRARIES=/usr/lib/python3.10 -DPython_INCLUDE_DIRS=/usr/include/python3.10 -DCMAKE_BUILD_TYPE=Release  -DFAISS_OPT_LEVEL=avx512
+# RUN cmake -B build . -DFAISS_ENABLE_GPU=OFF -DBUILD_TESTING=ON -DFAISS_ENABLE_PYTHON=ON -DPython_EXECUTABLE=/usr/bin/python3 -DPython_LIBRARIES=/usr/lib/python3.10 
+#   -DPython_INCLUDE_DIRS=/usr/include/python3.10 -DCMAKE_BUILD_TYPE=Release  -DFAISS_OPT_LEVEL=avx512
 # RUN make -C build -j faiss 
 # RUN make -C build -j install
 # RUN make -C build -j swigfaiss

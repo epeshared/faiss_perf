@@ -13,9 +13,12 @@ bin-release/
 *.ipa
 *.apk
 
-src/sift1M
-src/deep1b
-src/__pycache__
+src/sift1M/
+src/deep1b/
+src/__pycache__/
+
+vtune_data/
+*.tar.gz
 
 # Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
 # should NOT be excluded as they contain compiler settings and other important

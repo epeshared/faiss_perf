@@ -1,9 +1,20 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get update -y
-# RUN apt install -y build-essential 
+RUN apt install -y build-essential 
 RUN apt install -y wget git vim
+RUN apt install -y software-properties-common lsb-release
 WORKDIR /home/
+#Install Latest CMake
+RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+RUN apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main"
+RUN apt update -y
+RUN apt install kitware-archive-keyring
+# RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6AF7F09730B3F0A4
+RUN apt update -y
+RUN apt install cmake -y
+RUN apt install -y build-essential libtool autoconf unzip wget
+
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
 RUN apt-get install -y linux-tools-common linux-tools-generic
 RUN apt-get update -y
@@ -16,4 +27,14 @@ RUN chmod a+x /home/faiss/run_conda_env.sh
 RUN chmod a+x Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
 RUN bash ./Miniconda3-py310_23.5.2-0-Linux-x86_64.sh -b
 
+
+ADD Intel_VTune_Profiler_2023.1.0_internal.tar.gz .
+RUN apt install swig -y
+ADD build_faiss.sh /home/faiss/
+RUN chmod a+x /home/faiss/build_faiss.sh
+RUN apt-get install -y python3-dev
+RUN apt-get install -y python3-numpy-dev
+RUN apt-get install -y python3-pip
+RUN pip3 install setuptools
+RUN git clone https://github.com/epeshared/faiss_perf.git
 
