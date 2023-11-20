@@ -8,3 +8,5 @@ After entry the docker container
 * run run_conda.sh
 * run run_conda_env.sh
 * run build_faiss.sh
+
+You maybe build oneDNN by manually
