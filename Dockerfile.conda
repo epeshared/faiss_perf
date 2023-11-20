@@ -32,7 +32,7 @@ RUN chmod a+x Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
 RUN bash ./Miniconda3-py310_23.5.2-0-Linux-x86_64.sh -b
 
 
-ADD Intel_VTune_Profiler_2023.1.0_internal.tar.gz .
+# ADD Intel_VTune_Profiler_2023.1.0_internal.tar.gz .
 RUN apt install swig -y
 ADD build_faiss.sh /home/faiss/
 RUN chmod a+x /home/faiss/build_faiss.sh
