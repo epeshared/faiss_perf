@@ -31,7 +31,9 @@ yum groupinstall -y "Development Tools"
 yum install -y libtool autoconf unzip wget
 
 # 下载 Miniconda
-#wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
+wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
+chmod a+x Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
+bash ./Miniconda3-py310_23.5.2-0-Linux-x86_64.sh -b
 
 # 安装 Linux 性能分析工具
 yum install -y perf nmon htop
@@ -75,4 +77,9 @@ pip3 install setuptools
 rm -rf oneDNN
 git clone https://github.com/oneapi-src/oneDNN.git
 mv oneDNN ../oneDNN
-
+cd ../oneDNN
+mkdir -p build
+cd build
+cmake ..
+make -j
+make install
