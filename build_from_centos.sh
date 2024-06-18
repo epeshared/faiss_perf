@@ -1,6 +1,7 @@
 #!/bin/bash -e
 
 FAISS_HOME=/home/xtang
+FAISS_REPO=https://github.com/intel-sandbox/xps-prc-ds-faiss-opt.git
 
 # 更新系统软件包
 yum update -y
@@ -33,30 +34,30 @@ yum install -y libtool autoconf unzip wget
 # 下载 Miniconda
 wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
 chmod a+x Miniforge3-Linux-x86_64.sh
-bash ./Miniforge3-Linux-x86_64.sh -b
+bash ./Miniforge3-Linux-x86_64.sh -b -u
 
 # 安装 Linux 性能分析工具
 yum install -y perf nmon htop
 #yum update -y
 
 # 下载 Faiss 源代码
-rm -rf faiss
-rm -rf ${FAISS_HOME}/faiss
-wget https://github.com/facebookresearch/faiss/archive/refs/tags/v1.7.4.tar.gz
-tar -xvf v1.7.4.tar.gz
-mv faiss-1.7.4 faiss
+url=$FAISS_REPO
+FAISS_FOLDER=$(echo $url | sed 's|.*/||; s|.git$||')
+echo $FAISS_FOLDER
+
+rm -rf $FAISS_FOLDER
+git clone $FAISS_REPO
 
 # 添加自定义脚本并赋予执行权限
-cp run_conda.sh faiss/
-cp run_conda_env.sh faiss/
-cp build_faiss.sh faiss/
-chmod a+x faiss/run_conda.sh
-chmod a+x faiss/run_conda_env.sh
-chmod a+x faiss/build_faiss.sh
-mv faiss ${FAISS_HOME}/
+cp run_conda.sh $FAISS_FOLDER/
+cp run_conda_env.sh $FAISS_FOLDER/
+cp build_faiss.sh $FAISS_FOLDER/
+chmod a+x $FAISS_FOLDER/run_conda.sh
+chmod a+x $FAISS_FOLDER/run_conda_env.sh
+chmod a+x $FAISS_FOLDER/build_faiss.sh
 
 # 安装 SWIG
-yum install -y swig
+pip3 install swig
 
 # 安装 Python 开发依赖
 yum install -y python3-devel
