@@ -31,9 +31,9 @@ yum groupinstall -y "Development Tools"
 yum install -y libtool autoconf unzip wget
 
 # 下载 Miniconda
-wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
-chmod a+x Miniconda3-py310_23.5.2-0-Linux-x86_64.sh
-bash ./Miniconda3-py310_23.5.2-0-Linux-x86_64.sh -b
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+chmod a+x Miniforge3-Linux-x86_64.sh
+bash ./Miniforge3-Linux-x86_64.sh -b
 
 # 安装 Linux 性能分析工具
 yum install -y perf nmon htop
