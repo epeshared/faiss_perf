@@ -20,6 +20,10 @@ src/__pycache__/
 vtune_data/
 *.tar.gz
 
+Miniforge3-Linux-x86_64.sh
+Miniforge3-Linux-x86_64.sh*
+xps-prc-ds-faiss-opt
+xps-prc-ds-faiss-opt/*
 # Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.

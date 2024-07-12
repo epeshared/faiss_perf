@@ -36,6 +36,9 @@ wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge
 chmod a+x Miniforge3-Linux-x86_64.sh
 bash ./Miniforge3-Linux-x86_64.sh -b -u
 
+echo 'export PATH=/root/miniforge3/bin:$PATH' >> /etc/profile
+source /etc/profile
+
 # 安装 Linux 性能分析工具
 yum install -y perf nmon htop
 #yum update -y
@@ -51,10 +54,10 @@ git clone $FAISS_REPO
 # 添加自定义脚本并赋予执行权限
 cp run_conda.sh $FAISS_FOLDER/
 cp run_conda_env.sh $FAISS_FOLDER/
-cp build_faiss.sh $FAISS_FOLDER/
+cp build_faiss_miniforge.sh $FAISS_FOLDER/
 chmod a+x $FAISS_FOLDER/run_conda.sh
 chmod a+x $FAISS_FOLDER/run_conda_env.sh
-chmod a+x $FAISS_FOLDER/build_faiss.sh
+chmod a+x $FAISS_FOLDER/build_faiss_miniforge.sh
 
 # 安装 SWIG
 pip3 install swig
